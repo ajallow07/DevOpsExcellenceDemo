@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="src/src.csproj" />
-  <Project Path="tests/tests.csproj" />
+  <Project Path="HiringApi/HiringApi.csproj" />
+  <Project Path="HiringApi.Tests/HiringApi.Tests.csproj" />
 </Solution>
