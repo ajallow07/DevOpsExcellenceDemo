@@ -17,14 +17,16 @@ This is a hiring status microservice built with ASP.NET Core that returns hiring
 
 ```powershell
 # Run the application
-cd src
+cd HiringApi
 dotnet run
 
-# Test the API
-curl http://localhost:5000/api/hiring-status
+# Test the API (the app runs on http://localhost:5234)
+curl http://localhost:5234/api/hiring-status
+curl http://localhost:5234/healthz
 
 # Run tests
-dotnet test
+cd ..
+dotnet test HiringApi.Tests
 ```
 
 ## Configuration

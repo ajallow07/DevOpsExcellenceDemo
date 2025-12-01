@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HiringService\HiringService.csproj" />
+    <ProjectReference Include="..\HiringApi\HiringApi.csproj" />
   </ItemGroup>
 
 </Project>
