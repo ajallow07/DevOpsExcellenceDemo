@@ -8,7 +8,8 @@ This is a hiring status microservice built with ASP.NET Core that returns hiring
 
 **Key Features:**
 - REST API endpoints for hiring status and job role management
-- Job role posting with automatic 3-month expiration
+- Job role posting with configurable expiration period
+- Advanced feature flags for role management (posting control, approval workflow, visibility)
 - Feature toggles using Microsoft.FeatureManagement
 - Test-Driven Development with unit and integration tests
 - CI/CD pipeline with automated testing, security scanning, and code quality analysis
@@ -47,24 +48,39 @@ dotnet test HiringApi.Tests
 - `GET /api/hiring-status` - Check hiring status (controlled by feature flag)
 
 ### Job Roles
-- `POST /api/roles` - Create a new job role (automatically expires in 3 months)
-- `GET /api/roles` - Get all active roles
+- `POST /api/roles` - Create a new job role (configurable expiration, optional approval workflow)
+- `GET /api/roles` - Get all active, approved roles
 - `GET /api/roles?includeExpired=true` - Get all roles including expired ones
 - `GET /api/roles/{id}` - Get a specific role by ID
+- `PUT /api/roles/{id}/approve` - Approve a role (when approval workflow is enabled)
 
 ### Health
 - `GET /healthz` - Health check endpoint
 
 ## Configuration
 
-Toggle the hiring feature in `appsettings.json`:
+### Feature Flags
+Control application behavior through `appsettings.json`:
+
 ```json
 {
   "Features": {
-    "Hired": false
+    "Hired": false,
+    "EnableRolePosting": true,      // Kill switch for role creation
+    "RequireRoleApproval": false,   // Enable approval workflow
+    "ShowExpiredRoles": false       // Control expired role visibility
+  },
+  "RoleSettings": {
+    "ExpirationMonths": 3           // Configurable expiration period
   }
 }
 ```
+
+**Feature Flag Capabilities:**
+- **EnableRolePosting**: Emergency kill switch to disable role creation (returns 503)
+- **RequireRoleApproval**: Toggle approval workflow - roles created as unapproved when enabled
+- **ShowExpiredRoles**: Control whether expired roles appear in API responses
+- **ExpirationMonths**: Configure how long roles remain active (1-12 months)
 
 ## How GitHub Copilot Helped
 

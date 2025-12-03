@@ -1,6 +1,8 @@
 using HiringApi.Models;
 using HiringApi.Services;
+using HiringApi.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace HiringApi.Tests;
@@ -9,11 +11,14 @@ public class RoleServiceTests
 {
     private readonly RoleService _roleService;
     private readonly Mock<ILogger<RoleService>> _loggerMock;
+    private readonly Mock<IOptions<RoleSettings>> _roleSettingsMock;
 
     public RoleServiceTests()
     {
         _loggerMock = new Mock<ILogger<RoleService>>();
-        _roleService = new RoleService(_loggerMock.Object);
+        _roleSettingsMock = new Mock<IOptions<RoleSettings>>();
+        _roleSettingsMock.Setup(x => x.Value).Returns(new RoleSettings { ExpirationMonths = 3 });
+        _roleService = new RoleService(_loggerMock.Object, _roleSettingsMock.Object);
     }
 
     [Fact]
@@ -28,7 +33,7 @@ public class RoleServiceTests
         );
 
         // Act
-        var role = _roleService.CreateRole(request);
+        var role = _roleService.CreateRole(request, requireApproval: false);
 
         // Assert
         Assert.NotNull(role);
@@ -38,6 +43,7 @@ public class RoleServiceTests
         Assert.Equal("Engineering", role.Department);
         Assert.Equal("Remote", role.Location);
         Assert.False(role.IsExpired);
+        Assert.True(role.IsApproved);
     }
 
     [Fact]
@@ -53,7 +59,7 @@ public class RoleServiceTests
         var beforeCreation = DateTime.UtcNow;
 
         // Act
-        var role = _roleService.CreateRole(request);
+        var role = _roleService.CreateRole(request, requireApproval: false);
         var afterCreation = DateTime.UtcNow;
 
         // Assert
@@ -75,7 +81,7 @@ public class RoleServiceTests
         var beforeCreation = DateTime.UtcNow;
 
         // Act
-        var role = _roleService.CreateRole(request);
+        var role = _roleService.CreateRole(request, requireApproval: false);
         var afterCreation = DateTime.UtcNow;
 
         // Assert
@@ -84,31 +90,46 @@ public class RoleServiceTests
     }
 
     [Fact]
-    public void GetAllRoles_ShouldReturnOnlyActiveRolesByDefault()
+    public void CreateRole_WithApprovalRequired_ShouldCreateUnapprovedRole()
     {
         // Arrange
-        var activeRole = new CreateRoleRequest("Active Role", "Description", "Dept", "Location");
-        _roleService.CreateRole(activeRole);
+        var request = new CreateRoleRequest("Test Role", "Description", "Dept", "Location");
 
         // Act
-        var roles = _roleService.GetAllRoles(includeExpired: false);
+        var role = _roleService.CreateRole(request, requireApproval: true);
 
         // Assert
-        Assert.NotEmpty(roles);
-        Assert.All(roles, role => Assert.False(role.IsExpired));
+        Assert.False(role.IsApproved);
     }
 
     [Fact]
-    public void GetAllRoles_ShouldReturnAllRolesWhenIncludeExpiredIsTrue()
+    public void GetAllRoles_ShouldReturnOnlyApprovedRolesByDefault()
+    {
+        // Arrange
+        var approvedRole = new CreateRoleRequest("Approved Role", "Description", "Dept", "Location");
+        var unapprovedRole = new CreateRoleRequest("Unapproved Role", "Description", "Dept", "Location");
+        _roleService.CreateRole(approvedRole, requireApproval: false);
+        _roleService.CreateRole(unapprovedRole, requireApproval: true);
+
+        // Act
+        var roles = _roleService.GetAllRoles(includeExpired: false, includeUnapproved: false);
+
+        // Assert
+        Assert.Single(roles);
+        Assert.All(roles, role => Assert.True(role.IsApproved));
+    }
+
+    [Fact]
+    public void GetAllRoles_ShouldReturnAllRolesWhenIncludeUnapprovedIsTrue()
     {
         // Arrange
         var role1 = new CreateRoleRequest("Role 1", "Description 1", "Dept 1", "Location 1");
         var role2 = new CreateRoleRequest("Role 2", "Description 2", "Dept 2", "Location 2");
-        _roleService.CreateRole(role1);
-        _roleService.CreateRole(role2);
+        _roleService.CreateRole(role1, requireApproval: false);
+        _roleService.CreateRole(role2, requireApproval: true);
 
         // Act
-        var roles = _roleService.GetAllRoles(includeExpired: true);
+        var roles = _roleService.GetAllRoles(includeExpired: true, includeUnapproved: true);
 
         // Assert
         Assert.Equal(2, roles.Count());
@@ -119,7 +140,7 @@ public class RoleServiceTests
     {
         // Arrange
         var request = new CreateRoleRequest("Test Role", "Description", "Dept", "Location");
-        var createdRole = _roleService.CreateRole(request);
+        var createdRole = _roleService.CreateRole(request, requireApproval: false);
 
         // Act
         var retrievedRole = _roleService.GetRoleById(createdRole.Id);
@@ -144,6 +165,23 @@ public class RoleServiceTests
     }
 
     [Fact]
+    public void ApproveRole_ShouldSetRoleAsApproved()
+    {
+        // Arrange
+        var request = new CreateRoleRequest("Test Role", "Description", "Dept", "Location");
+        var role = _roleService.CreateRole(request, requireApproval: true);
+        Assert.False(role.IsApproved);
+
+        // Act
+        _roleService.ApproveRole(role.Id);
+
+        // Assert
+        var approvedRole = _roleService.GetRoleById(role.Id);
+        Assert.NotNull(approvedRole);
+        Assert.True(approvedRole.IsApproved);
+    }
+
+    [Fact]
     public void CreateRole_ShouldGenerateUniqueIdsForMultipleRoles()
     {
         // Arrange
@@ -151,8 +189,8 @@ public class RoleServiceTests
         var request2 = new CreateRoleRequest("Role 2", "Description 2", "Dept 2", "Location 2");
 
         // Act
-        var role1 = _roleService.CreateRole(request1);
-        var role2 = _roleService.CreateRole(request2);
+        var role1 = _roleService.CreateRole(request1, requireApproval: false);
+        var role2 = _roleService.CreateRole(request2, requireApproval: false);
 
         // Assert
         Assert.NotEqual(role1.Id, role2.Id);
@@ -165,7 +203,7 @@ public class RoleServiceTests
         var request = new CreateRoleRequest("Test Role", "Description", "Dept", "Location");
 
         // Act
-        var role = _roleService.CreateRole(request);
+        var role = _roleService.CreateRole(request, requireApproval: false);
 
         // Assert
         _loggerMock.Verify(
