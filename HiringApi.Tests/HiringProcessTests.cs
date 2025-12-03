@@ -30,7 +30,7 @@ public class HiringProcessTests : IClassFixture<WebApplicationFactory<Program>>
         }).CreateClient();
 
         // Act
-        var response = await client.GetAsync("/api/hiring-status");
+        var response = await client.GetAsync("/api/v1/hiring-status");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -57,7 +57,7 @@ public class HiringProcessTests : IClassFixture<WebApplicationFactory<Program>>
         }).CreateClient();
 
         // Act
-        var response = await client.GetAsync("/api/hiring-status");
+        var response = await client.GetAsync("/api/v1/hiring-status");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -88,7 +88,7 @@ public class HiringProcessTests : IClassFixture<WebApplicationFactory<Program>>
         var client = _factory.CreateClient();
 
         // Act
-        var response = await client.GetAsync("/api/hiring-status");
+        var response = await client.GetAsync("/api/v1/hiring-status");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);

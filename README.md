@@ -145,6 +145,58 @@ GitHub Copilot significantly accelerated this project's development:
 
 **Impact:** ~70% time reduction on boilerplate, configuration, and DevOps setup.
 
+## CI/CD Pipelines
+
+### Build and Test Pipeline
+Automated CI/CD workflow that runs on every push and pull request:
+
+**Pipeline: `.github/workflows/ci-cd.yml`**
+- ✅ Restore dependencies
+- ✅ Build in Release mode
+- ✅ Run all unit and integration tests
+- ✅ Collect code coverage
+- 🔧 SonarCloud code quality scan (optional)
+
+**Triggers:**
+- Push to `main` or `develop` branches
+- Pull requests to `main`
+
+### Docker Image Pipeline
+Automated Docker build and publish workflow:
+
+**Pipeline: `.github/workflows/docker-publish.yml`**
+- 🐳 Build Docker image using multi-stage Dockerfile
+- 🚀 Push to Docker Hub registry
+- 🏷️ Tag with multiple versions:
+  - `latest` - Latest stable build
+  - `build-<number>` - Build number (e.g., `build-42`)
+  - `build-<sha>` - Git commit SHA (e.g., `build-a1b2c3d`)
+
+**Triggers:**
+- PR merge to `main` branch
+- Manual workflow dispatch
+
+**Docker Hub Setup:**
+1. Add repository secrets in GitHub:
+   - `DOCKER_USERNAME`: Your Docker Hub username
+   - `DOCKER_PASSWORD`: Docker Hub access token
+2. Image will be published as: `<username>/hiringapi:latest`
+
+### Code Quality with SonarCloud
+
+**Setup SonarCloud Integration:**
+1. Sign up at https://sonarcloud.io with GitHub
+2. Import your repository
+3. Generate token at https://sonarcloud.io/account/security
+4. Add `SONAR_TOKEN` to GitHub repository secrets
+5. Uncomment SonarCloud step in `ci-cd.yml`
+
+**Configuration:** `sonar-project.properties`
+- Code coverage analysis
+- Security vulnerability detection
+- Code smell identification
+- Duplication detection
+
 ## Tech Stack
 
-.NET 10.0 • ASP.NET Core • Microsoft.FeatureManagement • Application Insights • xUnit • GitHub Actions • SonarCloud • Snyk • Docker
+.NET 10.0 • ASP.NET Core • Microsoft.FeatureManagement • Application Insights • xUnit • GitHub Actions • Docker Hub • SonarCloud • Snyk
