@@ -5,14 +5,44 @@ using System.Collections.Concurrent;
 
 namespace HiringApi.Services;
 
+/// <summary>
+/// Service interface for managing job roles
+/// </summary>
 public interface IRoleService
 {
+    /// <summary>
+    /// Creates a new job role
+    /// </summary>
+    /// <param name="request">Role creation request</param>
+    /// <param name="requireApproval">Whether the role requires approval before being published</param>
+    /// <returns>Created role</returns>
     Role CreateRole(CreateRoleRequest request, bool requireApproval);
+    
+    /// <summary>
+    /// Gets all job roles with optional filtering
+    /// </summary>
+    /// <param name="includeExpired">Include expired roles</param>
+    /// <param name="includeUnapproved">Include unapproved roles</param>
+    /// <returns>Collection of roles</returns>
     IEnumerable<Role> GetAllRoles(bool includeExpired = false, bool includeUnapproved = false);
+    
+    /// <summary>
+    /// Gets a specific role by ID
+    /// </summary>
+    /// <param name="id">Role identifier</param>
+    /// <returns>Role if found, null otherwise</returns>
     Role? GetRoleById(Guid id);
+    
+    /// <summary>
+    /// Approves a pending role
+    /// </summary>
+    /// <param name="id">Role identifier</param>
     void ApproveRole(Guid id);
 }
 
+/// <summary>
+/// Implementation of role management service
+/// </summary>
 public class RoleService : IRoleService
 {
     private readonly ConcurrentDictionary<Guid, Role> _roles = new();

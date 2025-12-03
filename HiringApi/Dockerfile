@@ -1,10 +1,23 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 WORKDIR /src
-COPY . .
-RUN dotnet publish HiringApi/HiringApi.csproj -c Release -o /app
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine
+COPY DevOpsExcellenceDemo.slnx ./
+COPY HiringApi/*.csproj ./HiringApi/
+COPY HiringApi.Tests/*.csproj ./HiringApi.Tests/
+
+RUN dotnet restore HiringApi/HiringApi.csproj
+
+COPY HiringApi/ ./HiringApi/
+
+RUN dotnet publish HiringApi/HiringApi.csproj -c Release -o /app --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 WORKDIR /app
-COPY --from=build /app .
+
+COPY --from=build --chown=nobody:nobody /app .
+
+USER nobody
+
 EXPOSE 8080
+
 ENTRYPOINT ["dotnet", "HiringApi.dll"]
