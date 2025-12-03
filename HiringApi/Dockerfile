@@ -11,11 +11,11 @@ COPY HiringApi/ ./HiringApi/
 
 RUN dotnet publish HiringApi/HiringApi.csproj -c Release -o /app --no-restore
 
+
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 WORKDIR /app
 
-COPY --from=build --chown=nobody:nobody /app .
-
+RUN chown -R nobody:nobody /app
 USER nobody
 
 EXPOSE 8080
