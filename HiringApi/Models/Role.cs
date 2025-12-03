@@ -10,10 +10,16 @@ public class Role
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime ExpiresAt { get; set; }
     public bool IsExpired => DateTime.UtcNow > ExpiresAt;
+    public bool IsApproved { get; set; } = true;
 
     public Role()
     {
         ExpiresAt = DateTime.UtcNow.AddMonths(3);
+    }
+    
+    public Role(int expirationMonths)
+    {
+        ExpiresAt = DateTime.UtcNow.AddMonths(expirationMonths);
     }
 }
 
